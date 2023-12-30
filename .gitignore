@@ -1,0 +1,10 @@
+# IDE
+.idea
+venv
+__pycache__
+
+# Custom directories
+# ...
+
+# Custom extensions/files
+# ...
