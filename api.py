@@ -1,21 +1,22 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from re import sub as re_sub
 from typing import Any
 
-from required_tools.url_generator.mediafire import run as generator_mediafire
-from required_tools.url_generator.googledrive import run as generator_googledrive
+from all_endpoints.url_generator.mediafire import run as generator_mediafire
+from all_endpoints.url_generator.googledrive import run as generator_googledrive
 
-from required_tools.wrapper.aliexpress_product import run as wrapper_aliexpress_product
+from all_endpoints.wrapper.aliexpress_product import run as wrapper_aliexpress_product
 
-from required_tools.randomizer.random_int_number import run as randomizer_random_int_number
-from required_tools.randomizer.random_float_number import run as randomizer_random_float_number
+from all_endpoints.randomizer.random_int_number import run as randomizer_random_int_number
+from all_endpoints.randomizer.random_float_number import run as randomizer_random_float_number
 
 
 # Initialize Flask and Flask-Limiter
 app = Flask(__name__)
-limiter = Limiter(app=app, key_func=get_remote_address)
+app.config['JSON_SORT_KEYS'] = True
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
 
 
 def show_empty_required_param_error(message: str) -> jsonify:
