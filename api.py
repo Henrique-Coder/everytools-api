@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_caching import Cache
 from re import sub as re_sub
 from typing import Any
 
@@ -13,10 +14,22 @@ from all_endpoints.randomizer.random_int_number import run as randomizer_random_
 from all_endpoints.randomizer.random_float_number import run as randomizer_random_float_number
 
 
-# Initialize Flask and Flask-Limiter
+# Initialize Flask app and your plugins
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = True
+app.config['CACHE_TYPE'] = 'simple'
 limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
+cache = Cache(app)
+
+
+# General functions
+def modify_string(string: Any, pattern: str) -> str:
+    return re_sub(pattern, str(), str(string))
+
+
+# Flask required functions
+def make_cache_key(*args, **kwargs) -> str:
+    return f'{request.url}{str(request.args)}'
 
 
 def show_empty_required_param_error(message: str) -> jsonify:
@@ -25,16 +38,9 @@ def show_empty_required_param_error(message: str) -> jsonify:
     return jsonify(data), 400
 
 
-def modify_string(string: Any, pattern: str) -> str:
-    return re_sub(pattern, str(), str(string))
-
-
-@app.errorhandler(404)
-def weberror_404(_) -> jsonify:
-    return jsonify({'success': False, 'message': 'Endpoint not found. Please check your endpoint and try again.'}), 404
-
-
+# Flask general routes
 @app.route('/')
+@cache.cached(timeout=86400, make_cache_key=make_cache_key)
 def index() -> jsonify:
     return jsonify({
         'success': True,
@@ -78,11 +84,17 @@ def index() -> jsonify:
     })
 
 
-########################################################################################################################
+@app.errorhandler(404)
+@cache.cached(timeout=86400, make_cache_key=make_cache_key)
+def weberror_404(_) -> jsonify:
+    return jsonify({'success': False, 'message': 'Endpoint not found. Please check your endpoint and try again.'}), 404
 
+
+# Flask API routes
 # API: Generator - MediaFire direct download url
 @app.route('/url-generator/mediafire', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
+@cache.cached(timeout=300, make_cache_key=make_cache_key)
 def url_generator__mediafire() -> Any:
     param_id = request.args.get('id')
 
@@ -107,6 +119,7 @@ def url_generator__mediafire() -> Any:
 # API: Generator - Google Drive direct download url
 @app.route('/url-generator/googledrive', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
+@cache.cached(timeout=300, make_cache_key=make_cache_key)
 def url_generator__googledrive() -> Any:
     param_id = request.args.get('id')
 
@@ -131,6 +144,7 @@ def url_generator__googledrive() -> Any:
 # API: Wrapper - AliExpress product info
 @app.route('/wrapper/aliexpress-product', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
+@cache.cached(timeout=300, make_cache_key=make_cache_key)
 def wrapper__aliexpress_product() -> Any:
     param_id = request.args.get('id')
 
