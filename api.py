@@ -13,6 +13,9 @@ from api_resources.tools_endpoints.v1.randomizer.random_int_number import main a
 from api_resources.tools_endpoints.v1.randomizer.random_float_number import main as randomizer__random_float_number
 
 
+# Flask required variables
+latest_api_version = 'v1'
+
 # Initialize Flask app and your plugins
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = True
@@ -36,54 +39,52 @@ def weberror_404(_) -> jsonify:
 # Flask general routes
 @app.route('/')
 @cache.cached(timeout=86400, make_cache_key=_make_cache_key)
-def index() -> jsonify:
+def home() -> jsonify:
     return jsonify({
-        'success': True,
         'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
-        'documentation_url': '',
-        'version': '1',
         'author_github': 'https://github.com/Henrique-Coder',
         'source_code_url': 'https://github.com/Henrique-Coder/everytools-api',
+        'base_url': 'http://node1.mindwired.com.br:8452',
+        'latest_api_version': latest_api_version,
         'endpoints': {
             'url-generator': {
                 'mediafire': {
-                    'url': '/url-generator/mediafire?id=',
+                    'url': f'/{latest_api_version}/url-generator/mediafire?id=',
                     'description': 'Generates a direct download link for items hosted on MediaFire.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 },
                 'googledrive': {
-                    'url': '/url-generator/googledrive?id=',
+                    'url': f'/{latest_api_version}/url-generator/googledrive?id=',
                     'description': 'Generates a direct download link for items hosted on Google Drive.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'wrapper': {
                 'aliexpress-product': {
-                    'url': '/wrapper/aliexpress-product?id=',
+                    'url': f'/{latest_api_version}/wrapper/aliexpress-product?id=',
                     'description': 'Wraps AliExpress product info into a friendly JSON format.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'randomizer': {
                 'random-int-number': {
-                    'url': '/randomizer/random-int-number?min=&max=',
+                    'url': f'/{latest_api_version}/randomizer/random-int-number?min=&max=',
                     'description': 'Generates a random integer number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 },
                 'random-float-number': {
-                    'url': '/randomizer/random-float-number?min=&max=',
+                    'url': f'/{latest_api_version}/randomizer/random-float-number?min=&max=',
                     'description': 'Generates a random float number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 }
             }
         }
-    })
+    }), 200
 
 
 # Flask API routes
-
 # Route: /url-generator/mediafire -> Generates a direct download link for items hosted on MediaFire.
-@app.route('/url-generator/mediafire', methods=['GET'])
+@app.route(f'/{latest_api_version}/url-generator/mediafire', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
 def _url_generator__mediafire() -> jsonify:
@@ -101,7 +102,7 @@ def _url_generator__mediafire() -> jsonify:
 
 
 # Route: /url-generator/googledrive -> Generates a direct download link for items hosted on Google Drive.
-@app.route('/url-generator/googledrive', methods=['GET'])
+@app.route(f'/{latest_api_version}/url-generator/googledrive', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
 def _url_generator__googledrive() -> jsonify:
@@ -119,7 +120,7 @@ def _url_generator__googledrive() -> jsonify:
 
 
 # Route: /wrapper/aliexpress-product -> Wraps AliExpress product info into a friendly JSON format.
-@app.route('/wrapper/aliexpress-product', methods=['GET'])
+@app.route(f'/{latest_api_version}/wrapper/aliexpress-product', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
 def _wrapper__aliexpress_product() -> jsonify:
@@ -128,6 +129,7 @@ def _wrapper__aliexpress_product() -> jsonify:
     if not p_id or not p_id.isnumeric():
         return jsonify({'success': False, 'message': "The id parameter is required, must exist and must be numeric."}), 400
 
+    p_id = int(p_id)
     output_data = wrapper__aliexpress(p_id)
 
     if output_data:
@@ -137,7 +139,7 @@ def _wrapper__aliexpress_product() -> jsonify:
 
 
 # Route: /randomizer/random-int-number -> Generates a random integer number between two numbers.
-@app.route('/randomizer/random-int-number', methods=['GET'])
+@app.route(f'/{latest_api_version}/randomizer/random-int-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
 def _randomizer__random_int_number() -> jsonify:
     p_min = request.args.get('min')
@@ -155,7 +157,7 @@ def _randomizer__random_int_number() -> jsonify:
 
 
 # Route: /randomizer/random-float-number -> Generates a random float number between two numbers.
-@app.route('/randomizer/random-float-number', methods=['GET'])
+@app.route(f'/{latest_api_version}/randomizer/random-float-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
 def _randomizer__random_float_number() -> jsonify:
     def is_float(value: Any) -> bool:
