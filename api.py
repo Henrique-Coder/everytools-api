@@ -2,16 +2,15 @@ from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
-from re import sub as re_sub
-from typing import Any
+from typing import Any, Union
 
-from all_endpoints.url_generator.mediafire import run as generator_mediafire
-from all_endpoints.url_generator.googledrive import run as generator_googledrive
+from api_endpoints.v1.url_generator.mediafire import main as url_generator__mediafire
+from api_endpoints.v1.url_generator.googledrive import main as url_generator__googledrive
 
-from all_endpoints.wrapper.aliexpress_product import run as wrapper_aliexpress_product
+from api_endpoints.v1.randomizer.random_int_number import main as randomizer__random_int_number
+from api_endpoints.v1.randomizer.random_float_number import main as randomizer__random_float_number
 
-from all_endpoints.randomizer.random_int_number import run as randomizer_random_int_number
-from all_endpoints.randomizer.random_float_number import run as randomizer_random_float_number
+from api_endpoints.v1.wrapper.aliexpress import main as wrapper__aliexpress
 
 
 # Initialize Flask app and your plugins
@@ -22,61 +21,58 @@ limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
 cache = Cache(app)
 
 
-# General functions
-def modify_string(string: Any, pattern: str) -> str:
-    return re_sub(pattern, str(), str(string))
-
-
 # Flask required functions
-def make_cache_key(*args, **kwargs) -> str:
+def _make_cache_key(*args, **kwargs) -> str:
     return f'{request.url}{str(request.args)}'
 
 
-def show_empty_required_param_error(message: str) -> jsonify:
-    data = {'success': False, 'message': message}
-
-    return jsonify(data), 400
+# Flask error handlers
+@app.errorhandler(404)
+@cache.cached(timeout=86400, make_cache_key=_make_cache_key)
+def weberror_404(_) -> jsonify:
+    return jsonify({'success': False, 'message': 'Endpoint not found. Please check your endpoint and try again.'}), 404
 
 
 # Flask general routes
 @app.route('/')
-@cache.cached(timeout=86400, make_cache_key=make_cache_key)
+@cache.cached(timeout=86400, make_cache_key=_make_cache_key)
 def index() -> jsonify:
     return jsonify({
         'success': True,
         'message': 'Welcome to the EveryTools API. Please check the documentation for more information.',
         'documentation_url': '',
-        'version': '1.0.0',
+        'version': '1',
         'author_github': 'https://github.com/Henrique-Coder',
+        'source_code_url': 'https://github.com/Henrique-Coder/everytools-api',
         'endpoints': {
             'url-generator': {
                 'mediafire': {
                     'url': '/url-generator/mediafire?id=',
-                    'description': 'MediaFire direct download url generator.',
+                    'description': 'Generates a direct download link for items hosted on MediaFire.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 },
                 'googledrive': {
                     'url': '/url-generator/googledrive?id=',
-                    'description': 'Google Drive direct download url generator.',
+                    'description': 'Generates a direct download link for items hosted on Google Drive.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'wrapper': {
                 'aliexpress-product': {
                     'url': '/wrapper/aliexpress-product?id=',
-                    'description': 'AliExpress product info wrapper.',
+                    'description': 'Wraps AliExpress product info into a friendly JSON format.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'randomizer': {
                 'random-int-number': {
                     'url': '/randomizer/random-int-number?min=&max=',
-                    'description': 'Random integer number generator.',
+                    'description': 'Generates a random integer number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 },
                 'random-float-number': {
                     'url': '/randomizer/random-float-number?min=&max=',
-                    'description': 'Random float number generator.',
+                    'description': 'Generates a random float number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 }
             }
@@ -84,150 +80,103 @@ def index() -> jsonify:
     })
 
 
-@app.errorhandler(404)
-@cache.cached(timeout=86400, make_cache_key=make_cache_key)
-def weberror_404(_) -> jsonify:
-    return jsonify({'success': False, 'message': 'Endpoint not found. Please check your endpoint and try again.'}), 404
-
-
 # Flask API routes
-# API: Generator - MediaFire direct download url
+
+# Route: /url-generator/mediafire -> Generates a direct download link for items hosted on MediaFire.
 @app.route('/url-generator/mediafire', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
-@cache.cached(timeout=300, make_cache_key=make_cache_key)
-def url_generator__mediafire() -> Any:
-    param_id = request.args.get('id')
+@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+def _url_generator__mediafire() -> jsonify:
+    p_id = request.args.get('id')
 
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-alphanumeric.")
+    if not p_id or not p_id.isalnum():
+        return jsonify({'success': False, 'message': "The id parameter is required, must exist and must be alphanumeric."}), 400
 
-    param_id = modify_string(request.args.get('id'), r'[^a-zA-Z0-9]')
-
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-alphanumeric.")
-
-    output_data = generator_mediafire(param_id)
+    output_data = url_generator__mediafire(p_id)
 
     if output_data:
-        data = {'success': True, 'url': output_data, 'query': param_id}
-        return jsonify(data)
+        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
     else:
-        data = {'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': param_id}
-        return jsonify(data), 404
+        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# API: Generator - Google Drive direct download url
+# Route: /url-generator/googledrive -> Generates a direct download link for items hosted on Google Drive.
 @app.route('/url-generator/googledrive', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
-@cache.cached(timeout=300, make_cache_key=make_cache_key)
-def url_generator__googledrive() -> Any:
-    param_id = request.args.get('id')
+@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+def _url_generator__googledrive() -> jsonify:
+    p_id = request.args.get('id')
 
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-alphanumeric.")
+    if not p_id or not p_id.isalnum():
+        return jsonify({'success': False, 'message': "The id parameter is required, must exist and must be alphanumeric."}), 400
 
-    param_id = modify_string(request.args.get('id'), r'[^a-zA-Z0-9\-_]')
-
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-alphanumeric.")
-
-    output_data = generator_googledrive(param_id)
+    output_data = url_generator__googledrive(p_id)
 
     if output_data:
-        data = {'success': True, 'url': output_data, 'query': param_id}
-        return jsonify(data)
+        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
     else:
-        data = {'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': param_id}
-        return jsonify(data), 404
+        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# API: Wrapper - AliExpress product info
+# Route: /wrapper/aliexpress-product -> Wraps AliExpress product info into a friendly JSON format.
 @app.route('/wrapper/aliexpress-product', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
-@cache.cached(timeout=300, make_cache_key=make_cache_key)
-def wrapper__aliexpress_product() -> Any:
-    param_id = request.args.get('id')
+@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+def _wrapper__aliexpress_product() -> jsonify:
+    p_id = request.args.get('id')
 
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-numerical.")
+    if not p_id or not p_id.isnumeric():
+        return jsonify({'success': False, 'message': "The id parameter is required, must exist and must be numeric."}), 400
 
-    param_id = modify_string(request.args.get('id'), r'\D')
-
-    if not param_id:
-        return show_empty_required_param_error("Parameter 'id' is required and cannot be empty, non-existent or non-numerical.")
-
-    output_data = wrapper_aliexpress_product(param_id)
+    output_data = wrapper__aliexpress(p_id)
 
     if output_data:
-        data = {'success': True, 'data': output_data, 'query': param_id}
-        return jsonify(data)
+        return jsonify({'success': True, 'product': output_data, 'query': {'id': p_id}}), 200
     else:
-        data = {'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': param_id}
-        return jsonify(data), 404
+        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# API: Randomizer - Random int number
+# Route: /randomizer/random-int-number -> Generates a random integer number between two numbers.
 @app.route('/randomizer/random-int-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
-def randomizer__random_int_number() -> Any:
-    param_min = request.args.get('min')
-    param_max = request.args.get('max')
+def _randomizer__random_int_number() -> jsonify:
+    p_min = request.args.get('min')
+    p_max = request.args.get('max')
 
-    if not param_min:
-        return show_empty_required_param_error("Parameter 'min' is required and cannot be empty, non-existent or non-numerical.")
+    if not p_min or not p_min.isnumeric() or not p_max or not p_max.isnumeric() or p_min > p_max:
+        return jsonify({'success': False, 'message': "The min and max parameters are required, must exist and must be numeric. The min parameter must be less than the max parameter."}), 400
 
-    if not param_max:
-        return show_empty_required_param_error("Parameter 'max' is required and cannot be empty, non-existent or non-numerical.")
-
-    param_min = modify_string(request.args.get('min'), r'[^\d.]')
-    param_max = modify_string(request.args.get('max'), r'[^\d.]')
-
-    if not param_min or '.' in param_min:
-        return show_empty_required_param_error("Parameter 'min' is required and cannot be empty, non-existent or non-numerical.")
-
-    if not param_max or '.' in param_max:
-        return show_empty_required_param_error("Parameter 'max' is required and cannot be empty, non-existent or non-numerical.")
-
-    output_data = randomizer_random_int_number(int(param_min), int(param_max))
+    output_data = randomizer__random_int_number(int(p_min), int(p_max))
 
     if output_data:
-        data = {'success': True, 'number': output_data, 'type': type(output_data).__name__, 'query': {'min': param_min, 'max': param_max}}
-        return jsonify(data)
+        return jsonify({'success': True, 'number': output_data, 'type': 'int', 'query': {'min': p_min, 'max': p_max}}), 200
     else:
-        data = {'success': False, 'message': 'Min and max value should be an integer number. Please check your query and try again.', 'query': {'min': param_min, 'max': param_max}}
-        return jsonify(data), 404
+        return jsonify({'success': False, 'message': 'An error occurred while generating the random number. Please check your query and try again.', 'query': {'min': p_min, 'max': p_max}}), 404
 
 
-# API: Randomizer - Random float number
+# Route: /randomizer/random-float-number -> Generates a random float number between two numbers.
 @app.route('/randomizer/random-float-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
-def randomizer__random_float_number() -> Any:
-    param_min = request.args.get('min')
-    param_max = request.args.get('max')
+def _randomizer__random_float_number() -> jsonify:
+    def is_float(value: Any) -> bool:
+        try:
+            float(value)
+            return True
+        except Exception:
+            return False
 
-    if not param_min:
-        return show_empty_required_param_error("Parameter 'min' is required and cannot be empty, non-existent or non-numerical (dot is allowed).")
+    p_min = request.args.get('min')
+    p_max = request.args.get('max')
 
-    if not param_max:
-        return show_empty_required_param_error("Parameter 'max' is required and cannot be empty, non-existent or non-numerical (dot is allowed).")
+    if not p_min or not is_float(p_min) or not p_max or not is_float(p_max) or float(p_min) > float(p_max):
+        return jsonify({'success': False, 'message': "The min and max parameters are required, must exist and must be integer or float numbers. The min parameter must be less than the max parameter."}), 400
 
-    param_min = modify_string(request.args.get('min'), r'[^\d.]')
-    param_max = modify_string(request.args.get('max'), r'[^\d.]')
-
-    if not param_min or '.' not in param_min or param_min.count('.') > 1 or param_min.startswith('.') or param_min.endswith('.'):
-        return show_empty_required_param_error("Parameter 'min' is required and cannot be empty, non-existent or non-numerical (dot is allowed).")
-
-    if not param_max or '.' not in param_max or param_max.count('.') > 1 or param_max.startswith('.') or param_max.endswith('.'):
-        return show_empty_required_param_error("Parameter 'max' is required and cannot be empty, non-existent or non-numerical (dot is allowed).")
-
-    output_data = randomizer_random_float_number(float(param_min), float(param_max))
+    output_data = randomizer__random_float_number(float(p_min), float(p_max))
 
     if output_data:
-        data = {'success': True, 'number': output_data, 'type': type(output_data).__name__, 'query': {'min': param_min, 'max': param_max}}
-        return jsonify(data)
+        return jsonify({'success': True, 'number': output_data, 'type': 'float', 'query': {'min': p_min, 'max': p_max}}), 200
     else:
-        data = {'success': False, 'message': 'Min and max value should be a float number. Please check your query and try again.', 'query': {'min': param_min, 'max': param_max}}
-        return jsonify(data), 404
+        return jsonify({'success': False, 'message': 'An error occurred while generating the random number. Please check your query and try again.', 'query': {'min': p_min, 'max': p_max}}), 404
 
 
 if __name__ == '__main__':
