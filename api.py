@@ -2,15 +2,15 @@ from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
-from typing import Any, Union
+from typing import Any
 
-from api_endpoints.v1.url_generator.mediafire import main as url_generator__mediafire
-from api_endpoints.v1.url_generator.googledrive import main as url_generator__googledrive
+from api_resources.tools_endpoints.v1.url_generator.mediafire import main as url_generator__mediafire
+from api_resources.tools_endpoints.v1.url_generator.googledrive import main as url_generator__googledrive
 
-from api_endpoints.v1.randomizer.random_int_number import main as randomizer__random_int_number
-from api_endpoints.v1.randomizer.random_float_number import main as randomizer__random_float_number
+from api_resources.tools_endpoints.v1.wrapper.aliexpress import main as wrapper__aliexpress
 
-from api_endpoints.v1.wrapper.aliexpress import main as wrapper__aliexpress
+from api_resources.tools_endpoints.v1.randomizer.random_int_number import main as randomizer__random_int_number
+from api_resources.tools_endpoints.v1.randomizer.random_float_number import main as randomizer__random_float_number
 
 
 # Initialize Flask app and your plugins
@@ -39,7 +39,7 @@ def weberror_404(_) -> jsonify:
 def index() -> jsonify:
     return jsonify({
         'success': True,
-        'message': 'Welcome to the EveryTools API. Please check the documentation for more information.',
+        'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
         'documentation_url': '',
         'version': '1',
         'author_github': 'https://github.com/Henrique-Coder',
