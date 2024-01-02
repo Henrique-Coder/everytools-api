@@ -6,10 +6,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin as urllib_parse_urljoin
 
 
-def main(_id: str) -> Union[dict, None]:
+def main(_id: int) -> Union[dict, None]:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, como Gecko) Chrome/115.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US',
     }
 
     try:
