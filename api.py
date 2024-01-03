@@ -46,31 +46,31 @@ def home() -> jsonify:
         'endpoints': {
             'url-generator': {
                 'mediafire': {
-                    'url': f'/url-generator/mediafire?id=',
+                    'url': '/url-generator/v1/mediafire?id=',
                     'description': 'Generates a direct download link for items hosted on MediaFire.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 },
                 'googledrive': {
-                    'url': f'/url-generator/googledrive?id=',
+                    'url': '/url-generator/v1/googledrive?id=',
                     'description': 'Generates a direct download link for items hosted on Google Drive.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'wrapper': {
                 'aliexpress-product': {
-                    'url': f'/wrapper/aliexpress-product?id=',
+                    'url': '/wrapper/v1/aliexpress-product?id=',
                     'description': 'Wraps AliExpress product info into a friendly JSON format.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'randomizer': {
                 'random-int-number': {
-                    'url': f'/randomizer/random-int-number?min=&max=',
+                    'url': '/randomizer/v1/random-int-number?min=&max=',
                     'description': 'Generates a random integer number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 },
                 'random-float-number': {
-                    'url': f'/randomizer/random-float-number?min=&max=',
+                    'url': '/randomizer/v1/random-float-number?min=&max=',
                     'description': 'Generates a random float number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 }
