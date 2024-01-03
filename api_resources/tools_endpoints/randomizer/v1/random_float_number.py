@@ -7,7 +7,6 @@ def main(min_value: float, max_value: float) -> Union[float, None]:
     try:
         min_value_mantisse = str(min_value).split('.', 1)[1]
         max_value_mantisse = str(max_value).split('.', 1)[1]
-        print(min_value_mantisse, max_value_mantisse)
 
         if min_value_mantisse == '0' and max_value_mantisse == '0':
             output_precision = 1
