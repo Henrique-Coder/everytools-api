@@ -9,10 +9,11 @@ from urllib.parse import urljoin as urllib_parse_urljoin
 def main(_id: int) -> Union[dict, None]:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, como Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'Cookie': 'xman_f=82eZ73Yk3kUmArs2cqSaeVhIBpZUqa5s/nFuPNZUbJduW17e9ELWYOdwJD9yZAawfaLD8+Yi69pXnJy2qhqQWnyq5vD3lfKYXc8WGgVIsu4ExnaqS8zejw==;aep_usuc_f=site=usa&c_tp=USD&region=US&b_locale=en_US',
     }
 
     try:
-        page_content = requests_get(f'https://www.aliexpress.com/item/{_id}.html', headers=headers).content
+        page_content = requests_get(f'https://www.aliexpress.us/item/{_id}.html', allow_redirects=True, headers=headers).content
         soup = BeautifulSoup(page_content, 'html.parser')
         data = soup.find('script', string=re_compile(r'window.runParams\s*=\s*{')).string.strip().replace('\n', str())
         raw_data = dict(json_loads(data[data.find('{', data.find('{') + 1): data.rfind('}')], strict=True))
