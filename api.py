@@ -3,12 +3,12 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from typing import Any
-from re import compile, match
+from re import compile
 
-from api_resources.tools_endpoints.url_generator.v1.mediafire import main as url_generator__mediafire
-from api_resources.tools_endpoints.url_generator.v1.googledrive import main as url_generator__googledrive
+from api_resources.tools_endpoints.url_generator.v1.mediafire_file import main as url_generator__mediafire_file
+from api_resources.tools_endpoints.url_generator.v1.googledrive_file import main as url_generator__googledrive_file
 
-from api_resources.tools_endpoints.wrapper.v1.aliexpress import main as wrapper__aliexpress
+from api_resources.tools_endpoints.wrapper.v1.aliexpress_product import main as wrapper__aliexpress
 
 from api_resources.tools_endpoints.randomizer.v1.random_int_number import main as randomizer__random_int_number
 from api_resources.tools_endpoints.randomizer.v1.random_float_number import main as randomizer__random_float_number
@@ -46,31 +46,31 @@ def home() -> jsonify:
         'endpoints': {
             'url-generator': {
                 'mediafire': {
-                    'url': '/url-generator/v1/mediafire?id=',
-                    'description': 'Generates a direct download link for items hosted on MediaFire.',
+                    'url': '/api/url-generator/v1/mediafire-file?id=',
+                    'description': 'Generates a direct download link for a file hosted on MediaFire.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 },
                 'googledrive': {
-                    'url': '/url-generator/v1/googledrive?id=',
-                    'description': 'Generates a direct download link for items hosted on Google Drive.',
+                    'url': '/api/url-generator/v1/googledrive-file?id=',
+                    'description': 'Generates a direct download link for a file hosted on Google Drive.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'wrapper': {
                 'aliexpress-product': {
-                    'url': '/wrapper/v1/aliexpress-product?id=',
+                    'url': '/api/wrapper/v1/aliexpress-product?id=',
                     'description': 'Wraps AliExpress product info into a friendly JSON format.',
                     'rate_limit': '1/second;30/minute;200/hour;600/day',
                 }
             },
             'randomizer': {
                 'random-int-number': {
-                    'url': '/randomizer/v1/random-int-number?min=&max=',
+                    'url': '/api/randomizer/v1/random-int-number?min=&max=',
                     'description': 'Generates a random integer number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 },
                 'random-float-number': {
-                    'url': '/randomizer/v1/random-float-number?min=&max=',
+                    'url': '/api/randomizer/v1/random-float-number?min=&max=',
                     'description': 'Generates a random float number between two numbers.',
                     'rate_limit': '5/second;5000/day',
                 }
@@ -81,17 +81,17 @@ def home() -> jsonify:
 
 # Flask API routes
 
-# Route: /url-generator/mediafire -> Generates a direct download link for items hosted on MediaFire.
-@app.route('/url-generator/v1/mediafire', methods=['GET'])
+# Route: /api/url-generator/mediafire-file -> Generates a direct download link for a file hosted on MediaFire.
+@app.route('/api/url-generator/v1/mediafire-file', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
-def _url_generator__mediafire() -> jsonify:
+def _url_generator__mediafire_file() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isalnum():
         return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
 
-    output_data = url_generator__mediafire(p_id)
+    output_data = url_generator__mediafire_file(p_id)
 
     if output_data:
         return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
@@ -99,17 +99,17 @@ def _url_generator__mediafire() -> jsonify:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# Route: /url-generator/googledrive -> Generates a direct download link for items hosted on Google Drive.
-@app.route('/url-generator/v1/googledrive', methods=['GET'])
+# Route: /api/url-generator/googledrive-file -> Generates a direct download link for a file hosted on Google Drive.
+@app.route('/api/url-generator/v1/googledrive-file', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
-def _url_generator__googledrive() -> jsonify:
+def _url_generator__googledrive_file() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
         return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
 
-    output_data = url_generator__googledrive(p_id)
+    output_data = url_generator__googledrive_file(p_id)
 
     if output_data:
         return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
@@ -117,8 +117,8 @@ def _url_generator__googledrive() -> jsonify:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# Route: /wrapper/aliexpress-product -> Wraps AliExpress product info into a friendly JSON format.
-@app.route('/wrapper/v1/aliexpress-product', methods=['GET'])
+# Route: /api/wrapper/aliexpress-product -> Wraps AliExpress product info into a friendly JSON format.
+@app.route('/api/wrapper/v1/aliexpress-product', methods=['GET'])
 @limiter.limit('1/second;30/minute;200/hour;600/day')
 @cache.cached(timeout=300, make_cache_key=_make_cache_key)
 def _wrapper__aliexpress_product() -> jsonify:
@@ -136,8 +136,8 @@ def _wrapper__aliexpress_product() -> jsonify:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
 
-# Route: /randomizer/random-int-number -> Generates a random integer number between two numbers.
-@app.route('/randomizer/v1/random-int-number', methods=['GET'])
+# Route: /api/randomizer/random-int-number -> Generates a random integer number between two numbers.
+@app.route('/api/randomizer/v1/random-int-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
 def _randomizer__random_int_number() -> jsonify:
     p_min = request.args.get('min')
@@ -158,8 +158,8 @@ def _randomizer__random_int_number() -> jsonify:
         return jsonify({'success': False, 'message': 'An error occurred while generating the random number. Please check your query and try again.', 'query': {'min': p_min, 'max': p_max}}), 404
 
 
-# Route: /randomizer/random-float-number -> Generates a random float number between two numbers.
-@app.route('/randomizer/v1/random-float-number', methods=['GET'])
+# Route: /api/randomizer/random-float-number -> Generates a random float number between two numbers.
+@app.route('/api/randomizer/v1/random-float-number', methods=['GET'])
 @limiter.limit('5/second;5000/day')
 def _randomizer__random_float_number() -> jsonify:
     def is_float(value: Any) -> bool:
