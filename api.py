@@ -5,13 +5,13 @@ from flask_caching import Cache
 from typing import Any
 from re import compile
 
-from api_resources.tools_endpoints.url_generator.v1.mediafire_file import main as url_generator__mediafire_file
-from api_resources.tools_endpoints.url_generator.v1.googledrive_file import main as url_generator__googledrive_file
+from api_resources.main_endpoints.url_generator.v1.mediafire_file import main as url_generator__mediafire_file
+from api_resources.main_endpoints.url_generator.v1.googledrive_file import main as url_generator__googledrive_file
 
-from api_resources.tools_endpoints.wrapper.v1.aliexpress_product import main as wrapper__aliexpress
+from api_resources.main_endpoints.wrapper.v1.aliexpress_product import main as wrapper__aliexpress
 
-from api_resources.tools_endpoints.randomizer.v1.random_int_number import main as randomizer__random_int_number
-from api_resources.tools_endpoints.randomizer.v1.random_float_number import main as randomizer__random_float_number
+from api_resources.main_endpoints.randomizer.v1.random_int_number import main as randomizer__random_int_number
+from api_resources.main_endpoints.randomizer.v1.random_float_number import main as randomizer__random_float_number
 
 
 # Initialize Flask app and your plugins
