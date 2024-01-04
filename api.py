@@ -7,6 +7,7 @@ from re import compile
 
 from api_resources.main_endpoints.url_generator.v1.mediafire_file import main as url_generator__mediafire_file
 from api_resources.main_endpoints.url_generator.v1.googledrive_file import main as url_generator__googledrive_file
+from api_resources.main_endpoints.url_generator.v1.gofile_file import main as url_generator__gofile_file
 
 from api_resources.main_endpoints.wrapper.v1.aliexpress_product import main as wrapper__aliexpress
 
@@ -27,11 +28,21 @@ def _make_cache_key(*args, **kwargs) -> str:
     return f'{request.url}{str(request.args)}'
 
 
+def _route_in_maintenance() -> jsonify:
+    return jsonify({'success': False, 'message': 'This endpoint is under maintenance. Please try again later.'}), 503
+
+
 # Flask error handlers
 @app.errorhandler(404)
 @cache.cached(timeout=86400, make_cache_key=_make_cache_key)
 def weberror_404(_) -> jsonify:
     return jsonify({'success': False, 'message': 'Endpoint not found. Please check your endpoint and try again.'}), 404
+
+
+@app.errorhandler(429)
+@cache.cached(timeout=86400, make_cache_key=_make_cache_key)
+def weberror_429(_) -> jsonify:
+    return jsonify({'success': False, 'message': 'You have exceeded the rate limit. Please try again later.'}), 429
 
 
 # Flask general routes
@@ -110,6 +121,26 @@ def _url_generator__googledrive_file() -> jsonify:
         return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
 
     output_data = url_generator__googledrive_file(p_id)
+
+    if output_data:
+        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+
+
+# Route: /api/url-generator/gofile-file -> Generates a direct download link for a file hosted on Gofile.
+@app.route('/api/url-generator/v1/gofile-file', methods=['GET'])
+@limiter.limit('1/second;30/minute;200/hour;600/day')
+@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+def _url_generator__gofile_file() -> jsonify:
+    return _route_in_maintenance()
+
+    p_id = request.args.get('id')
+
+    if not p_id or not p_id.isalnum():
+        return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
+
+    output_data = url_generator__gofile_file(p_id)
 
     if output_data:
         return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
