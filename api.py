@@ -105,7 +105,7 @@ def _url_generator__mediafire_file() -> jsonify:
     output_data = url_generator__mediafire_file(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
+        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
     else:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
@@ -123,7 +123,7 @@ def _url_generator__googledrive_file() -> jsonify:
     output_data = url_generator__googledrive_file(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
+        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
     else:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
@@ -143,7 +143,7 @@ def _url_generator__gofile_file() -> jsonify:
     output_data = url_generator__gofile_file(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'url': output_data, 'query': {'id': p_id}}), 200
+        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
     else:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
@@ -162,7 +162,7 @@ def _wrapper__aliexpress_product() -> jsonify:
     output_data = wrapper__aliexpress(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'product': output_data, 'query': {'id': p_id}}), 200
+        return jsonify({'success': True, 'output': {'data': output_data}, 'query': {'id': p_id}}), 200
     else:
         return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
 
