@@ -1,6 +1,6 @@
 flask
 flask-limiter
 flask-caching
-requests
-beautifulsoup4
+httpx
 lxml
+beautifulsoup4
